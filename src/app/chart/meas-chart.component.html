@@ -1,0 +1,252 @@
+<div class="row-md-12">
+  <mat-tab-group color="warn">
+    <mat-tab label="График">
+
+      <br>
+
+      <mat-expansion-panel [expanded]="step === 0" (opened)="step=0">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Выбор измерений
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Аналоговые величины</mat-label>
+          <mat-select [(ngModel)]="selectedAnalog" multiple>
+            <mat-option *ngFor="let topping of analogNames" [value]="topping">{{topping}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Действующие значения</mat-label>
+          <mat-select [(ngModel)]="selectedRms" multiple>
+            <mat-option *ngFor="let topping of rmsNames" [value]="topping">{{topping}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Цифровые величины</mat-label>
+          <mat-select [(ngModel)]="selectedDigital" multiple>
+            <mat-option *ngFor="let topping of digitalNames" [value]="topping">{{topping}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-action-row class="action-row">
+          <mat-form-field appearance="outline" class="example-form-2">
+            <mat-label>Начало</mat-label>
+            <input matInput type="number" step="1" [(ngModel)]="start">
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="example-form">
+            <mat-label>Конец</mat-label>
+            <input matInput type="number" step="1" [(ngModel)]="end">
+          </mat-form-field>
+          <button class="example-btn-2" mat-raised-button color="warn"
+                  (click)="nextStep(step)"
+                  [disabled]="((selectedAnalog.length == 0) && (selectedRms.length == 0) && (selectedDigital.length == 0)) || (start==null || end==null || start>end || end-start>maxSize)">
+            Применить
+          </button>
+        </mat-action-row>
+      </mat-expansion-panel>
+
+      <br>
+
+      <mat-expansion-panel [expanded]="step === 1"
+                           (opened)="step=1"
+                           [disabled]="!show">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            График
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <apx-chart
+          [yaxis]="chartOptions.yaxis"
+          [series]="chartOptions.series"
+          [chart]="chartOptions.chart"
+          [title]="chartOptions.title"
+          [legend]="chartOptions.legend"
+
+          [dataLabels]="commonOpt.dataLabels"
+          [markers]="commonOpt.markers"
+          [stroke]="commonOpt.stroke"
+          [grid]="commonOpt.grid"
+          [xaxis]="commonOpt.xaxis"
+          [tooltip]="commonOpt.tooltip"
+        ></apx-chart>
+
+        <apx-chart
+          [yaxis]="chartOptionsDig.yaxis"
+          [series]="chartOptionsDig.series"
+          [chart]="chartOptionsDig.chart"
+          [title]="chartOptionsDig.title"
+          [legend]="chartOptionsDig.legend"
+
+          [dataLabels]="commonOpt.dataLabels"
+          [markers]="commonOpt.markers"
+          [stroke]="commonOpt.stroke"
+          [grid]="commonOpt.grid"
+          [xaxis]="commonOpt.xaxis"
+          [tooltip]="commonOpt.tooltip"
+        ></apx-chart>
+
+      </mat-expansion-panel>
+    </mat-tab>
+
+    <mat-tab label="Таблица">
+
+      <br>
+
+      <mat-paginator class="demo-paginator"
+                     (page)="handlePageEvent($event)"
+                     [length]="length"
+                     [pageSize]="pageSize"
+                     [disabled]="false"
+                     [showFirstLastButtons]="true"
+                     [pageSizeOptions]="pageSizeOptions"
+                     [hidePageSize]="false"
+                     [pageIndex]="pageIndex"
+                     aria-label="Select page">
+      </mat-paginator>
+
+      <br>
+
+      <div *ngIf="show">
+        <table class="table table-bordered table-striped table-hover table-sm">
+          <thead class="thead-dark">
+          <tr>
+            <th *ngFor="let d of pageTableData" scope="col">{{d.name}}</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let darr of pageTableData[0].dataArr; index as i">
+            <td *ngFor="let d of pageTableData"> {{Math.round(d.dataArr[i] * 1000000) / 1000000}} </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </mat-tab>
+
+    <mat-tab label="Анализ">
+
+      <br>
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Выберите токи для анализа</mat-card-title>
+        </mat-card-header>
+
+        <br>
+
+        <mat-card-content>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Выберете ток фазы A</mat-label>
+            <mat-select [(value)]="phAName">
+              <mat-option *ngFor="let name of rmsNames" value="{{name}}">{{name}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <br>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Выберете ток фазы B</mat-label>
+            <mat-select [(value)]="phBName">
+              <mat-option *ngFor="let name of rmsNames" value="{{name}}">{{name}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <br>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Выберете ток фазы C</mat-label>
+            <mat-select [(value)]="phCName">
+              <mat-option *ngFor="let name of rmsNames" value="{{name}}">{{name}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <br>
+
+        </mat-card-content>
+
+        <mat-card-actions>
+          <mat-form-field appearance="outline" class="example-form">
+            <mat-label>Запас</mat-label>
+            <input matInput type="number" step="1" min="1" [(ngModel)]="stock">
+            <span matTextSuffix>%</span>
+          </mat-form-field>
+          <button class="example-btn" mat-raised-button color="warn" [disabled]="!phAName || !phBName || !phCName"
+                  (click)="analise()">
+            Применить
+          </button>
+        </mat-card-actions>
+      </mat-card>
+
+      <br>
+
+      <mat-card *ngIf="showMeasInfo">
+
+        <mat-card-header>
+          <mat-card-title>Результат</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-card-content>Время возникновения КЗ: {{measData.time}} с ({{getCount(measData.time)}})</mat-card-content>
+          <mat-card-content>Поврежденные фазы: {{measData.fault}}</mat-card-content>
+          <mat-card-content>Расчетная уставка: {{measData.set}}</mat-card-content>
+
+          <br>
+
+          <mat-card>
+            <table class="table table-bordered table-hover table-sm">
+              <thead>
+              <tr>
+                <th>Режим</th>
+                <th>Время снятия</th>
+                <th>Фаза A</th>
+                <th>Фаза B</th>
+                <th>Фаза C</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr *ngFor="let d of [measData.normalCurrent, measData.faultCurrent], index as i">
+                <td> {{i == 0 ? "Нормальный режим" : "Режим повреждения"}} </td>
+                <td> {{d.time}} с ({{getCount(d.time)}})</td>
+                <td> {{Math.round(d.phA * 1000) / 1000}} </td>
+                <td> {{Math.round(d.phB * 1000) / 1000}} </td>
+                <td> {{Math.round(d.phC * 1000) / 1000}} </td>
+              </tr>
+              </tbody>
+            </table>
+          </mat-card>
+        </mat-card-content>
+      </mat-card>
+      <br>
+    </mat-tab>
+
+    <mat-tab label="Информация">
+      <br>
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Информация</mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <mat-card-content><b> Количство точек в периоде: </b> {{metaInf.n}}</mat-card-content>
+          <mat-card-content><b> Частота: </b> {{metaInf.freq}}</mat-card-content>
+          <mat-card-content><b> Количество аналоговых сигналов: </b> {{metaInf.analog}} </mat-card-content>
+          <mat-card-content><b> Количество цифровых сигналов: </b> {{metaInf.digital}} </mat-card-content>
+          <mat-card-content *ngIf="metaInf.timeStart != ''"><b> Время начала: </b> {{metaInf.timeStart}}
+          </mat-card-content>
+          <mat-card-content *ngIf="metaInf.timeEnd != ''"><b> Время конца: </b> {{metaInf.timeEnd}} </mat-card-content>
+          <mat-card-content><b> Тип файла: </b> {{metaInf.type}} </mat-card-content>
+          <mat-card-content *ngIf="metaInf.file1Name != ''"><b> Имя файла: </b> {{metaInf.file1Name}}
+          </mat-card-content>
+          <mat-card-content *ngIf="metaInf.file2Name != ''"><b> Имя файла: </b> {{metaInf.file2Name}}
+          </mat-card-content>
+        </mat-card-content>
+
+      </mat-card>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

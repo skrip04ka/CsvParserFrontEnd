@@ -1,0 +1,67 @@
+<div class="row-md-12">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Comtrade file</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <mat-card-content><b>Файл .cfg: </b> {{inputCfg}} </mat-card-content>
+      <mat-card-content><b>Файл .dat: </b> {{inputDat}} </mat-card-content>
+    </mat-card-content>
+
+    <mat-card-actions>
+      <mat-card-actions>
+        <button type="button" mat-raised-button (click)="fileInput1.click()">.cfg</button>
+        <input hidden #fileInput1 type="file" accept=".cfg" name="file1" (change)="selectCfgFile($event)">
+
+        <button type="button" mat-raised-button (click)="fileInput2.click()">.dat</button>
+        <input hidden #fileInput2 type="file" accept=".dat" name="file2" (change)="selectDatFile($event)">
+      </mat-card-actions>
+      <mat-card-actions>
+        <button mat-raised-button color="warn" [disabled]="!selectedCfgFiles || !selectedDatFiles" (click)="upload()">
+          Загрузить
+        </button>
+      </mat-card-actions>
+    </mat-card-actions>
+  </mat-card>
+
+  <br>
+
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>CSV file</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <mat-card-content><b>Файл .csv: </b> {{inputCsv}}</mat-card-content>
+    </mat-card-content>
+
+
+    <mat-card-actions>
+      <mat-card-actions>
+        <button type="button" mat-raised-button (click)="fileInput3.click()">.csv</button>
+        <input hidden #fileInput3 type="file" accept=".csv" name="file3" (change)="selectCsvFile($event)">
+
+      </mat-card-actions>
+      <mat-card-actions>
+        <button mat-raised-button color="warn" [disabled]="!selectedCsvFiles" (click)="uploadCsv()">
+          Загрузить
+        </button>
+      </mat-card-actions>
+    </mat-card-actions>
+  </mat-card>
+
+  <br>
+  <div *ngIf="currentFile">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Прогресс</mat-card-title>
+      </mat-card-header>
+      <br>
+      <mat-card-content>
+        <mat-progress-bar mode="indeterminate" *ngIf="!message"></mat-progress-bar>
+        <div class="alert alert-secondary" role="alert" *ngIf="message">{{ message }}</div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
