@@ -26,7 +26,7 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Цифровые величины</mat-label>
+          <mat-label>Дискретные величины</mat-label>
           <mat-select [(ngModel)]="selectedDigital" multiple>
             <mat-option *ngFor="let topping of digitalNames" [value]="topping">{{topping}}</mat-option>
           </mat-select>
@@ -234,7 +234,7 @@
           <mat-card-content><b> Количство точек в периоде: </b> {{metaInf.n}}</mat-card-content>
           <mat-card-content><b> Частота: </b> {{metaInf.freq}}</mat-card-content>
           <mat-card-content><b> Количество аналоговых сигналов: </b> {{metaInf.analog}} </mat-card-content>
-          <mat-card-content><b> Количество цифровых сигналов: </b> {{metaInf.digital}} </mat-card-content>
+          <mat-card-content><b> Количество дискретных сигналов: </b> {{metaInf.digital}} </mat-card-content>
           <mat-card-content *ngIf="metaInf.timeStart != ''"><b> Время начала: </b> {{metaInf.timeStart}}
           </mat-card-content>
           <mat-card-content *ngIf="metaInf.timeEnd != ''"><b> Время конца: </b> {{metaInf.timeEnd}} </mat-card-content>
