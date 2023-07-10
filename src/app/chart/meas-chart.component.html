@@ -3,8 +3,44 @@
     <mat-tab label="График">
 
       <br>
-
       <mat-expansion-panel [expanded]="step === 0" (opened)="step=0">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Выбор файла
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <table class="table table-hover table-sm">
+          <thead>
+          <tr>
+            <th>Номер</th>
+            <th>Имя</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let f of filesInfo">
+            <td> {{f.id}} </td>
+            <td> {{f.name}}</td>
+          </tr>
+          </tbody>
+        </table>
+
+        <mat-action-row class="action-row">
+          <mat-form-field appearance="outline" class="example-form-3">
+            <mat-label>Номер файла</mat-label>
+            <input matInput type="number" step="1" [(ngModel)]="id">
+          </mat-form-field>
+          <button class="example-btn-2" mat-raised-button color="warn"
+                  (click)="loadDataInfo(); nextStep(step)"
+                  [disabled]="id == null || !idList.includes(id)">
+            Применить
+          </button>
+        </mat-action-row>
+      </mat-expansion-panel>
+
+      <br>
+
+      <mat-expansion-panel [expanded]="step === 1" (opened)="step=1" [disabled]="!showParams.fileSelected">
         <mat-expansion-panel-header>
           <mat-panel-title>
             Выбор измерений
@@ -42,8 +78,9 @@
             <input matInput type="number" step="1" [(ngModel)]="end">
           </mat-form-field>
           <button class="example-btn-2" mat-raised-button color="warn"
-                  (click)="nextStep(step)"
-                  [disabled]="((selectedAnalog.length == 0) && (selectedRms.length == 0) && (selectedDigital.length == 0)) || (start==null || end==null || start>end || end-start>maxSize)">
+                  (click)="nextStep(step); loadData()"
+                  [disabled]="((selectedAnalog.length == 0) && (selectedRms.length == 0) && (selectedDigital.length == 0))
+                   || (start==null || end==null || start>end || end-start>maxSize) || (id == null || !idList.includes(id))">
             Применить
           </button>
         </mat-action-row>
@@ -51,9 +88,9 @@
 
       <br>
 
-      <mat-expansion-panel [expanded]="step === 1"
-                           (opened)="step=1"
-                           [disabled]="!show">
+      <mat-expansion-panel [expanded]="step === 2"
+                           (opened)="step=2"
+                           [disabled]="!showParams.measSelected">
         <mat-expansion-panel-header>
           <mat-panel-title>
             График
@@ -93,12 +130,12 @@
       </mat-expansion-panel>
     </mat-tab>
 
-    <mat-tab label="Таблица">
+    <mat-tab label="Таблица" [disabled]="!showParams.measSelected">
 
       <br>
 
       <mat-paginator class="demo-paginator"
-                     (page)="handlePageEvent($event)"
+                     (page)="handleTablePageEvent($event)"
                      [length]="length"
                      [pageSize]="pageSize"
                      [disabled]="false"
@@ -111,7 +148,7 @@
 
       <br>
 
-      <div *ngIf="show">
+      <div *ngIf="showParams.measSelected">
         <table class="table table-bordered table-striped table-hover table-sm">
           <thead class="thead-dark">
           <tr>
@@ -128,7 +165,7 @@
 
     </mat-tab>
 
-    <mat-tab label="Анализ">
+    <mat-tab label="Анализ" [disabled]="!showParams.fileSelected">
 
       <br>
       <mat-card>
@@ -175,7 +212,8 @@
             <input matInput type="number" step="1" min="1" [(ngModel)]="stock">
             <span matTextSuffix>%</span>
           </mat-form-field>
-          <button class="example-btn" mat-raised-button color="warn" [disabled]="!phAName || !phBName || !phCName"
+          <button class="example-btn" mat-raised-button color="warn"
+                  [disabled]="!phAName || !phBName || !phCName || id == null || !idList.includes(id)"
                   (click)="analise()">
             Применить
           </button>
@@ -184,7 +222,7 @@
 
       <br>
 
-      <mat-card *ngIf="showMeasInfo">
+      <mat-card *ngIf="showParams.measForAnaliseSelected">
 
         <mat-card-header>
           <mat-card-title>Результат</mat-card-title>
@@ -223,7 +261,7 @@
       <br>
     </mat-tab>
 
-    <mat-tab label="Информация">
+    <mat-tab label="Информация" [disabled]="!showParams.fileSelected">
       <br>
       <mat-card>
         <mat-card-header>
@@ -235,13 +273,13 @@
           <mat-card-content><b> Частота: </b> {{metaInf.freq}}</mat-card-content>
           <mat-card-content><b> Количество аналоговых сигналов: </b> {{metaInf.analog}} </mat-card-content>
           <mat-card-content><b> Количество дискретных сигналов: </b> {{metaInf.digital}} </mat-card-content>
-          <mat-card-content *ngIf="metaInf.timeStart != ''"><b> Время начала: </b> {{metaInf.timeStart}}
+          <mat-card-content *ngIf="metaInf.timeStart != 'empty'"><b> Время начала: </b> {{metaInf.timeStart}}
           </mat-card-content>
-          <mat-card-content *ngIf="metaInf.timeEnd != ''"><b> Время конца: </b> {{metaInf.timeEnd}} </mat-card-content>
+          <mat-card-content *ngIf="metaInf.timeEnd != 'empty'"><b> Время конца: </b> {{metaInf.timeEnd}} </mat-card-content>
           <mat-card-content><b> Тип файла: </b> {{metaInf.type}} </mat-card-content>
-          <mat-card-content *ngIf="metaInf.file1Name != ''"><b> Имя файла: </b> {{metaInf.file1Name}}
+          <mat-card-content *ngIf="metaInf.file1Name != 'empty'"><b> Имя файла: </b> {{metaInf.file1Name}}
           </mat-card-content>
-          <mat-card-content *ngIf="metaInf.file2Name != ''"><b> Имя файла: </b> {{metaInf.file2Name}}
+          <mat-card-content *ngIf="metaInf.file2Name != 'empty'"><b> Имя файла: </b> {{metaInf.file2Name}}
           </mat-card-content>
         </mat-card-content>
 
