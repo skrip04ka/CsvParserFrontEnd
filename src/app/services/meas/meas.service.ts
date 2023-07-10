@@ -1,6 +1,5 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {HttpClient, HttpEvent, HttpParams, HttpRequest} from "@angular/common/http";
-import {MeasList} from "../../models/meas-list";
 import {Observable} from "rxjs";
 import {MeasData} from "../../models/meas-data";
 import {MetaInf} from "../../models/meta-inf";
