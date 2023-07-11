@@ -1,6 +1,6 @@
 <div class="row-md-12">
   <mat-tab-group color="warn">
-    <mat-tab label="График">
+    <mat-tab label="Выбор">
 
       <br>
       <mat-expansion-panel [expanded]="step === 0" (opened)="step=0">
@@ -78,7 +78,7 @@
             <input matInput type="number" step="1" [(ngModel)]="end">
           </mat-form-field>
           <button class="example-btn-2" mat-raised-button color="warn"
-                  (click)="nextStep(step); loadData()"
+                  (click)="loadData()"
                   [disabled]="((selectedAnalog.length == 0) && (selectedRms.length == 0) && (selectedDigital.length == 0))
                    || (start==null || end==null || start>end || end-start>maxSize) || (id == null || !idList.includes(id))">
             Применить
@@ -88,47 +88,41 @@
 
       <br>
 
-      <mat-expansion-panel [expanded]="step === 2"
-                           (opened)="step=2"
-                           [disabled]="!showParams.measSelected">
-        <mat-expansion-panel-header>
-          <mat-panel-title>
-            График
-          </mat-panel-title>
-        </mat-expansion-panel-header>
-
-        <apx-chart
-          [yaxis]="chartOptions.yaxis"
-          [series]="chartOptions.series"
-          [chart]="chartOptions.chart"
-          [title]="chartOptions.title"
-          [legend]="chartOptions.legend"
-
-          [dataLabels]="commonOpt.dataLabels"
-          [markers]="commonOpt.markers"
-          [stroke]="commonOpt.stroke"
-          [grid]="commonOpt.grid"
-          [xaxis]="commonOpt.xaxis"
-          [tooltip]="commonOpt.tooltip"
-        ></apx-chart>
-
-        <apx-chart
-          [yaxis]="chartOptionsDig.yaxis"
-          [series]="chartOptionsDig.series"
-          [chart]="chartOptionsDig.chart"
-          [title]="chartOptionsDig.title"
-          [legend]="chartOptionsDig.legend"
-
-          [dataLabels]="commonOpt.dataLabels"
-          [markers]="commonOpt.markers"
-          [stroke]="commonOpt.stroke"
-          [grid]="commonOpt.grid"
-          [xaxis]="commonOpt.xaxis"
-          [tooltip]="commonOpt.tooltip"
-        ></apx-chart>
-
-      </mat-expansion-panel>
     </mat-tab>
+    <mat-tab label="График" [disabled]="!showParams.measSelected">
+      <mat-card-content>
+        <apx-chart
+            [yaxis]="chartOptions.yaxis"
+            [series]="chartOptions.series"
+            [chart]="chartOptions.chart"
+            [title]="chartOptions.title"
+            [legend]="chartOptions.legend"
+
+            [dataLabels]="commonOpt.dataLabels"
+            [markers]="commonOpt.markers"
+            [stroke]="commonOpt.stroke"
+            [grid]="commonOpt.grid"
+            [xaxis]="commonOpt.xaxis"
+            [tooltip]="commonOpt.tooltip"
+          ></apx-chart>
+
+          <apx-chart
+            [yaxis]="chartOptionsDig.yaxis"
+            [series]="chartOptionsDig.series"
+            [chart]="chartOptionsDig.chart"
+            [title]="chartOptionsDig.title"
+            [legend]="chartOptionsDig.legend"
+
+            [dataLabels]="commonOpt.dataLabels"
+            [markers]="commonOpt.markers"
+            [stroke]="commonOpt.stroke"
+            [grid]="commonOpt.grid"
+            [xaxis]="commonOpt.xaxis"
+            [tooltip]="commonOpt.tooltip"
+          ></apx-chart>
+      </mat-card-content>
+    </mat-tab>
+
 
     <mat-tab label="Таблица" [disabled]="!showParams.measSelected">
 
@@ -269,18 +263,16 @@
         </mat-card-header>
 
         <mat-card-content>
+          <mat-card-content><b> Наименование: </b> {{metaInf.name}} </mat-card-content>
           <mat-card-content><b> Количство точек в периоде: </b> {{metaInf.n}}</mat-card-content>
           <mat-card-content><b> Частота: </b> {{metaInf.freq}}</mat-card-content>
           <mat-card-content><b> Количество аналоговых сигналов: </b> {{metaInf.analog}} </mat-card-content>
           <mat-card-content><b> Количество дискретных сигналов: </b> {{metaInf.digital}} </mat-card-content>
           <mat-card-content *ngIf="metaInf.timeStart != 'empty'"><b> Время начала: </b> {{metaInf.timeStart}}
           </mat-card-content>
-          <mat-card-content *ngIf="metaInf.timeEnd != 'empty'"><b> Время конца: </b> {{metaInf.timeEnd}} </mat-card-content>
+          <mat-card-content *ngIf="metaInf.timeEnd != 'empty'"><b> Время конца: </b> {{metaInf.timeEnd}}
+          </mat-card-content>
           <mat-card-content><b> Тип файла: </b> {{metaInf.type}} </mat-card-content>
-          <mat-card-content *ngIf="metaInf.file1Name != 'empty'"><b> Имя файла: </b> {{metaInf.file1Name}}
-          </mat-card-content>
-          <mat-card-content *ngIf="metaInf.file2Name != 'empty'"><b> Имя файла: </b> {{metaInf.file2Name}}
-          </mat-card-content>
         </mat-card-content>
 
       </mat-card>

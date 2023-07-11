@@ -2,9 +2,9 @@
   <div class="col-md-12">
     <div class="card bg-dark my-3">
       <div class="card-body">
-        <h2 class="card-title text-center text-white py-3">{{ title }}</h2>
+        <h2 class="card-title text-center text-white">{{ title }}</h2>
 
-        <ul class="text-center list-inline py-3">
+        <div class="text-center list-inline">
 
           <li class="list-inline-item">
             <a routerLink="/chart" class="btn btn-info">Chart</a>
@@ -13,7 +13,7 @@
           <li class="list-inline-item">
             <a routerLink="/upload" class="btn btn-info">Upload</a>
           </li>
-        </ul>
+        </div>
       </div>
     </div>
     <router-outlet></router-outlet>
