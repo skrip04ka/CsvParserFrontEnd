@@ -26,13 +26,18 @@
         </table>
 
         <mat-action-row class="action-row">
+<!--          <mat-form-field appearance="outline" class="example-form-3">-->
+<!--            <mat-label>Номер файла</mat-label>-->
+<!--            <input matInput type="number" step="1" [(ngModel)]="id">-->
+<!--          </mat-form-field>-->
           <mat-form-field appearance="outline" class="example-form-3">
             <mat-label>Номер файла</mat-label>
-            <input matInput type="number" step="1" [(ngModel)]="id">
+            <mat-select [(value)]="id">
+              <mat-option *ngFor="let select of idList" value="{{select}}">{{select}}</mat-option>
+            </mat-select>
           </mat-form-field>
           <button class="example-btn-2" mat-raised-button color="warn"
-                  (click)="loadDataInfo(); nextStep(step)"
-                  [disabled]="id == null || !idList.includes(id)">
+                  (click)="loadDataInfo(); nextStep(step)" [disabled]="id == null">
             Применить
           </button>
         </mat-action-row>
@@ -80,7 +85,7 @@
           <button class="example-btn-2" mat-raised-button color="warn"
                   (click)="loadData()"
                   [disabled]="((selectedAnalog.length == 0) && (selectedRms.length == 0) && (selectedDigital.length == 0))
-                   || (start==null || end==null || start>end || end-start>maxSize) || (id == null || !idList.includes(id))">
+                   || (start==null || end==null || start>end || end-start>maxSize) || (id == null)">
             Применить
           </button>
         </mat-action-row>
@@ -207,7 +212,7 @@
             <span matTextSuffix>%</span>
           </mat-form-field>
           <button class="example-btn" mat-raised-button color="warn"
-                  [disabled]="!phAName || !phBName || !phCName || id == null || !idList.includes(id)"
+                  [disabled]="!phAName || !phBName || !phCName || id == null"
                   (click)="analise()">
             Применить
           </button>
@@ -222,8 +227,8 @@
           <mat-card-title>Результат</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <mat-card-content>Время возникновения КЗ: {{measData.time}} с ({{getCount(measData.time)}})</mat-card-content>
-          <mat-card-content>Поврежденные фазы: {{measData.fault}}</mat-card-content>
+          <mat-card-content>Время возникновения КЗ: {{measData.time<0?"не найдено":measData.time + " с (" + getCount(measData.time) + ")"}}</mat-card-content>
+          <mat-card-content>Поврежденные фазы: {{measData.fault == null?"не найдено":measData.fault}}</mat-card-content>
           <mat-card-content>Расчетная уставка: {{measData.set}}</mat-card-content>
 
           <br>

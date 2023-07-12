@@ -257,6 +257,10 @@ export class MeasChartComponent implements OnInit {
 
   }
 
+  printlog() {
+    console.log(this.id)
+  }
+
   nextStep(st: number) {
     this.step = st + 1;
   }
@@ -300,7 +304,7 @@ export class MeasChartComponent implements OnInit {
 
       const name: string = mea.name;
       const dataArr = data.map((value) => value.meas
-        .filter(value => value.name.startsWith(name)).map(value1 => value1.val)[0])
+        .filter(value => value.name==name).map(value1 => value1.val)[0])
       this.chartOptions.series.push(
         {
           name: name,
