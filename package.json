@@ -8,6 +8,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
+  "proxy": "http://host.docker.internal:9005",
   "private": true,
   "dependencies": {
     "@angular/animations": "^15.2.0",
