@@ -19,6 +19,7 @@ import {MeasList} from "../models/meas-list";
 import {PageEvent} from "@angular/material/paginator";
 import {MeasData} from "../models/meas-data";
 import {MetaInf} from "../models/meta-inf";
+import {FilesInfo} from "../models/files-info";
 
 export class TableData {
   constructor(name: string, dataArr: number[]) {
@@ -29,6 +30,11 @@ export class TableData {
   name: string = '';
   dataArr: number[] = [];
 
+}
+export class ShowParam {
+  fileSelected: boolean = false
+  measSelected: boolean = false
+  measForAnaliseSelected: boolean = false
 }
 
 export type ChartOptions = {
@@ -52,13 +58,13 @@ export type ChartOptions = {
 })
 export class MeasChartComponent implements OnInit {
 
-  show: boolean = false;
+  showParams: ShowParam = new ShowParam()
 
-  chartOptions: ChartOptions;
-  chartOptionsDig: ChartOptions;
-  commonOpt: ChartOptions;
+  chartOptions: ChartOptions
+  chartOptionsDig: ChartOptions
+  commonOpt: ChartOptions
 
-  names: string[] = [];
+  names: string[] = []
   analogNames: string[] = [];
   digitalNames: string[] = [];
 
@@ -84,13 +90,16 @@ export class MeasChartComponent implements OnInit {
   rmsNames: string[] = [];
 
   measData: MeasData = new MeasData();
-  showMeasInfo = false;
 
   start: number = 1;
   end: number = 60000;
   maxSize: number = 60000;
 
   metaInf: MetaInf = new MetaInf();
+
+  filesInfo: FilesInfo[] = [];
+  id: number | undefined;
+  idList: number[] = [];
 
   constructor(private measService: MeasService) {
     this.chartOptions = {
@@ -248,30 +257,40 @@ export class MeasChartComponent implements OnInit {
 
   }
 
+  printlog() {
+    console.log(this.id)
+  }
+
   nextStep(st: number) {
     this.step = st + 1;
-    const req: string[] = [];
-    this.selectedAnalog.forEach(value => req.push(value));
-    this.selectedRms.forEach(value => req.push(value));
-    this.selectedDigital.forEach(value => req.push(value));
+  }
 
-    this.measService.getMeasByNames(req, this.start, this.end).subscribe({
-      next: (event: any) => {
-        if (event.body != undefined) {
-          this.setOpt(event.body);
+  loadData() {
+    if (this.id != undefined) {
+      const req: string[] = [];
+      this.selectedAnalog.forEach(value => req.push(value));
+      this.selectedRms.forEach(value => req.push(value));
+      this.selectedDigital.forEach(value => req.push(value));
+      this.measService.getMeasByNames(req, this.start, this.end, this.id).subscribe({
+        next: (event: any) => {
+          if (event.body != undefined) {
+            this.setOpt(event.body);
+          }
         }
-      }
-    })
+      })
+    }
   }
 
   analise(): void {
-    if (this.phAName != '' && this.phBName != '' && this.phCName != '') {
-      this.measService.analise(this.phAName, this.phBName, this.phCName, this.stock)
-        .subscribe(data => {
-          this.measData = data;
-        })
+    if (this.id) {
+      if (this.phAName != '' && this.phBName != '' && this.phCName != '') {
+        this.measService.analise(this.phAName, this.phBName, this.phCName, this.id, this.stock)
+          .subscribe(data => {
+            this.measData = data;
+          })
+      }
+      this.showParams.measForAnaliseSelected = true;
     }
-    this.showMeasInfo = true;
   }
 
   setOpt(data: MeasList[]): void {
@@ -285,7 +304,7 @@ export class MeasChartComponent implements OnInit {
 
       const name: string = mea.name;
       const dataArr = data.map((value) => value.meas
-        .filter(value => value.name.startsWith(name)).map(value1 => value1.val)[0])
+        .filter(value => value.name==name).map(value1 => value1.val)[0])
       this.chartOptions.series.push(
         {
           name: name,
@@ -308,22 +327,22 @@ export class MeasChartComponent implements OnInit {
     }
 
     this.length = this.tableData[0].dataArr.length
-    this.setPage(this.pageSize * this.pageIndex, this.pageSize * (this.pageIndex + 1))
+    this.setTablePage(this.pageSize * this.pageIndex, this.pageSize * (this.pageIndex + 1))
 
-    this.show = true;
+    this.showParams.measSelected = true;
   }
 
-  handlePageEvent(e: PageEvent) {
+  handleTablePageEvent(e: PageEvent) {
     this.length = e.length;
     this.pageSize = e.pageSize;
     this.pageIndex = e.pageIndex;
     if (this.length != 0) {
-      this.setPage(this.pageSize * this.pageIndex, this.pageSize * (this.pageIndex + 1))
+      this.setTablePage(this.pageSize * this.pageIndex, this.pageSize * (this.pageIndex + 1))
     }
   }
 
 
-  setPage(start: number, end: number): void {
+  setTablePage(start: number, end: number): void {
     this.pageTableData = []
     for (const td of this.tableData) {
       this.pageTableData.push(new TableData(
@@ -334,15 +353,24 @@ export class MeasChartComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.measService.getMeasNames().subscribe(data => {
-      this.names = data
-      this.rmsNames = this.names.filter(s => s.endsWith("_RMS"))
-      this.digitalNames = this.names.filter(s => s.endsWith("_BOOL"))
-      this.analogNames = this.names.filter(s => !s.endsWith("_BOOL") && !s.endsWith("_RMS"))
+    this.measService.getFilesInfo().subscribe(data => {
+      this.filesInfo = data
+      this.idList = data.map(v => v.id)
     })
-    this.measService.getMetaInf().subscribe(data => {
-      this.metaInf = data;
-    })
+  }
+  loadDataInfo(): void {
+    if (this.id != undefined) {
+      this.measService.getMeasNames(this.id).subscribe(data => {
+        this.names = data.sort()
+        this.rmsNames = this.names.filter(s => s.endsWith("_RMS"))
+        this.digitalNames = this.names.filter(s => s.endsWith("_BOOL"))
+        this.analogNames = this.names.filter(s => !s.endsWith("_BOOL") && !s.endsWith("_RMS"))
+      })
+      this.measService.getMetaInf(this.id).subscribe(data => {
+        this.metaInf = data;
+      })
+      this.showParams.fileSelected = true
+    }
   }
 
   getCount(val: number) {

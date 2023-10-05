@@ -1,10 +1,51 @@
 <div class="row-md-12">
   <mat-tab-group color="warn">
-    <mat-tab label="График">
+    <mat-tab label="Выбор">
+
+      <br>
+      <mat-expansion-panel [expanded]="step === 0" (opened)="step=0">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Выбор файла
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <table class="table table-hover table-sm">
+          <thead>
+          <tr>
+            <th>Номер</th>
+            <th>Имя</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let f of filesInfo">
+            <td> {{f.id}} </td>
+            <td> {{f.name}}</td>
+          </tr>
+          </tbody>
+        </table>
+
+        <mat-action-row class="action-row">
+<!--          <mat-form-field appearance="outline" class="example-form-3">-->
+<!--            <mat-label>Номер файла</mat-label>-->
+<!--            <input matInput type="number" step="1" [(ngModel)]="id">-->
+<!--          </mat-form-field>-->
+          <mat-form-field appearance="outline" class="example-form-3">
+            <mat-label>Номер файла</mat-label>
+            <mat-select [(value)]="id">
+              <mat-option *ngFor="let select of idList" value="{{select}}">{{select}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <button class="example-btn-2" mat-raised-button color="warn"
+                  (click)="loadDataInfo(); nextStep(step)" [disabled]="id == null">
+            Применить
+          </button>
+        </mat-action-row>
+      </mat-expansion-panel>
 
       <br>
 
-      <mat-expansion-panel [expanded]="step === 0" (opened)="step=0">
+      <mat-expansion-panel [expanded]="step === 1" (opened)="step=1" [disabled]="!showParams.fileSelected">
         <mat-expansion-panel-header>
           <mat-panel-title>
             Выбор измерений
@@ -42,8 +83,9 @@
             <input matInput type="number" step="1" [(ngModel)]="end">
           </mat-form-field>
           <button class="example-btn-2" mat-raised-button color="warn"
-                  (click)="nextStep(step)"
-                  [disabled]="((selectedAnalog.length == 0) && (selectedRms.length == 0) && (selectedDigital.length == 0)) || (start==null || end==null || start>end || end-start>maxSize)">
+                  (click)="loadData()"
+                  [disabled]="((selectedAnalog.length == 0) && (selectedRms.length == 0) && (selectedDigital.length == 0))
+                   || (start==null || end==null || start>end || end-start>maxSize) || (id == null)">
             Применить
           </button>
         </mat-action-row>
@@ -51,54 +93,48 @@
 
       <br>
 
-      <mat-expansion-panel [expanded]="step === 1"
-                           (opened)="step=1"
-                           [disabled]="!show">
-        <mat-expansion-panel-header>
-          <mat-panel-title>
-            График
-          </mat-panel-title>
-        </mat-expansion-panel-header>
-
+    </mat-tab>
+    <mat-tab label="График" [disabled]="!showParams.measSelected">
+      <mat-card-content>
         <apx-chart
-          [yaxis]="chartOptions.yaxis"
-          [series]="chartOptions.series"
-          [chart]="chartOptions.chart"
-          [title]="chartOptions.title"
-          [legend]="chartOptions.legend"
+            [yaxis]="chartOptions.yaxis"
+            [series]="chartOptions.series"
+            [chart]="chartOptions.chart"
+            [title]="chartOptions.title"
+            [legend]="chartOptions.legend"
 
-          [dataLabels]="commonOpt.dataLabels"
-          [markers]="commonOpt.markers"
-          [stroke]="commonOpt.stroke"
-          [grid]="commonOpt.grid"
-          [xaxis]="commonOpt.xaxis"
-          [tooltip]="commonOpt.tooltip"
-        ></apx-chart>
+            [dataLabels]="commonOpt.dataLabels"
+            [markers]="commonOpt.markers"
+            [stroke]="commonOpt.stroke"
+            [grid]="commonOpt.grid"
+            [xaxis]="commonOpt.xaxis"
+            [tooltip]="commonOpt.tooltip"
+          ></apx-chart>
 
-        <apx-chart
-          [yaxis]="chartOptionsDig.yaxis"
-          [series]="chartOptionsDig.series"
-          [chart]="chartOptionsDig.chart"
-          [title]="chartOptionsDig.title"
-          [legend]="chartOptionsDig.legend"
+          <apx-chart
+            [yaxis]="chartOptionsDig.yaxis"
+            [series]="chartOptionsDig.series"
+            [chart]="chartOptionsDig.chart"
+            [title]="chartOptionsDig.title"
+            [legend]="chartOptionsDig.legend"
 
-          [dataLabels]="commonOpt.dataLabels"
-          [markers]="commonOpt.markers"
-          [stroke]="commonOpt.stroke"
-          [grid]="commonOpt.grid"
-          [xaxis]="commonOpt.xaxis"
-          [tooltip]="commonOpt.tooltip"
-        ></apx-chart>
-
-      </mat-expansion-panel>
+            [dataLabels]="commonOpt.dataLabels"
+            [markers]="commonOpt.markers"
+            [stroke]="commonOpt.stroke"
+            [grid]="commonOpt.grid"
+            [xaxis]="commonOpt.xaxis"
+            [tooltip]="commonOpt.tooltip"
+          ></apx-chart>
+      </mat-card-content>
     </mat-tab>
 
-    <mat-tab label="Таблица">
+
+    <mat-tab label="Таблица" [disabled]="!showParams.measSelected">
 
       <br>
 
       <mat-paginator class="demo-paginator"
-                     (page)="handlePageEvent($event)"
+                     (page)="handleTablePageEvent($event)"
                      [length]="length"
                      [pageSize]="pageSize"
                      [disabled]="false"
@@ -111,7 +147,7 @@
 
       <br>
 
-      <div *ngIf="show">
+      <div *ngIf="showParams.measSelected">
         <table class="table table-bordered table-striped table-hover table-sm">
           <thead class="thead-dark">
           <tr>
@@ -128,7 +164,7 @@
 
     </mat-tab>
 
-    <mat-tab label="Анализ">
+    <mat-tab label="Анализ" [disabled]="!showParams.fileSelected">
 
       <br>
       <mat-card>
@@ -175,7 +211,8 @@
             <input matInput type="number" step="1" min="1" [(ngModel)]="stock">
             <span matTextSuffix>%</span>
           </mat-form-field>
-          <button class="example-btn" mat-raised-button color="warn" [disabled]="!phAName || !phBName || !phCName"
+          <button class="example-btn" mat-raised-button color="warn"
+                  [disabled]="!phAName || !phBName || !phCName || id == null"
                   (click)="analise()">
             Применить
           </button>
@@ -184,14 +221,14 @@
 
       <br>
 
-      <mat-card *ngIf="showMeasInfo">
+      <mat-card *ngIf="showParams.measForAnaliseSelected">
 
         <mat-card-header>
           <mat-card-title>Результат</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <mat-card-content>Время возникновения КЗ: {{measData.time}} с ({{getCount(measData.time)}})</mat-card-content>
-          <mat-card-content>Поврежденные фазы: {{measData.fault}}</mat-card-content>
+          <mat-card-content>Время возникновения КЗ: {{measData.time<0?"не найдено":measData.time + " с (" + getCount(measData.time) + ")"}}</mat-card-content>
+          <mat-card-content>Поврежденные фазы: {{measData.fault == null?"не найдено":measData.fault}}</mat-card-content>
           <mat-card-content>Расчетная уставка: {{measData.set}}</mat-card-content>
 
           <br>
@@ -223,7 +260,7 @@
       <br>
     </mat-tab>
 
-    <mat-tab label="Информация">
+    <mat-tab label="Информация" [disabled]="!showParams.fileSelected">
       <br>
       <mat-card>
         <mat-card-header>
@@ -231,18 +268,16 @@
         </mat-card-header>
 
         <mat-card-content>
+          <mat-card-content><b> Наименование: </b> {{metaInf.name}} </mat-card-content>
           <mat-card-content><b> Количство точек в периоде: </b> {{metaInf.n}}</mat-card-content>
           <mat-card-content><b> Частота: </b> {{metaInf.freq}}</mat-card-content>
           <mat-card-content><b> Количество аналоговых сигналов: </b> {{metaInf.analog}} </mat-card-content>
           <mat-card-content><b> Количество дискретных сигналов: </b> {{metaInf.digital}} </mat-card-content>
-          <mat-card-content *ngIf="metaInf.timeStart != ''"><b> Время начала: </b> {{metaInf.timeStart}}
+          <mat-card-content *ngIf="metaInf.timeStart != 'empty'"><b> Время начала: </b> {{metaInf.timeStart}}
           </mat-card-content>
-          <mat-card-content *ngIf="metaInf.timeEnd != ''"><b> Время конца: </b> {{metaInf.timeEnd}} </mat-card-content>
+          <mat-card-content *ngIf="metaInf.timeEnd != 'empty'"><b> Время конца: </b> {{metaInf.timeEnd}}
+          </mat-card-content>
           <mat-card-content><b> Тип файла: </b> {{metaInf.type}} </mat-card-content>
-          <mat-card-content *ngIf="metaInf.file1Name != ''"><b> Имя файла: </b> {{metaInf.file1Name}}
-          </mat-card-content>
-          <mat-card-content *ngIf="metaInf.file2Name != ''"><b> Имя файла: </b> {{metaInf.file2Name}}
-          </mat-card-content>
         </mat-card-content>
 
       </mat-card>
