@@ -14,7 +14,7 @@ export class FileService {
 
     formData.append('csv', file);
 
-    const req = new HttpRequest('POST', `${this.baseUrl}/data/upload/csv`, formData, {
+    const req = new HttpRequest('POST', `${this.baseUrl}/file/upload/csv`, formData, {
       reportProgress: true,
       responseType: 'json'
     });
@@ -27,7 +27,7 @@ export class FileService {
     formData.append('cfg', cfg);
     formData.append('dat', dat);
 
-    const req = new HttpRequest('POST', `${this.baseUrl}/data/upload/comtrade`, formData, {
+    const req = new HttpRequest('POST', `${this.baseUrl}/file/upload/comtrade`, formData, {
       reportProgress: true,
       responseType: 'json'
     });

@@ -5,7 +5,7 @@ import {AppComponent} from './app.component';
 import {MeasChartComponent} from "./chart/meas-chart.component";
 import {FileComponent} from "./file/file.component";
 import {FileService} from "./services/file/file.service";
-import {MeasService} from "./services/meas/meas.service";
+import {DataService} from "./services/data/data.service";
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {MatExpansionModule} from "@angular/material/expansion";
 import {MatTabsModule} from "@angular/material/tabs";
@@ -42,7 +42,7 @@ import {HttpClientModule} from "@angular/common/http";
     MatCardModule,
     MatProgressBarModule
   ],
-  providers: [FileService, MeasService],
+  providers: [FileService, DataService],
   bootstrap: [AppComponent]
 })
 export class AppModule {

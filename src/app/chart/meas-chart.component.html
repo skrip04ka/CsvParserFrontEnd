@@ -3,41 +3,43 @@
     <mat-tab label="Выбор">
 
       <br>
-      <mat-expansion-panel [expanded]="step === 0" (opened)="step=0">
+      <mat-expansion-panel>
         <mat-expansion-panel-header>
-          <mat-panel-title>
-            Выбор файла
-          </mat-panel-title>
+          <mat-panel-title>Выбор файла</mat-panel-title>
         </mat-expansion-panel-header>
 
         <table class="table table-hover table-sm">
           <thead>
           <tr>
             <th>Номер</th>
+            <th>ID</th>
             <th>Имя</th>
+            <th>Действие</th>
           </tr>
           </thead>
           <tbody>
-          <tr *ngFor="let f of filesInfo">
-            <td> {{f.id}} </td>
-            <td> {{f.name}}</td>
+          <tr *ngFor="let f of filesInfo; index as i">
+            <td>{{i}}</td>
+            <td>{{f.id}}</td>
+            <td>{{f.name}}</td>
+            <td>
+              <button class="example-btn-2" mat-button color="warn" (click)="deleteFile(f.id)">Удалить</button>
+            </td>
           </tr>
           </tbody>
         </table>
 
         <mat-action-row class="action-row">
-<!--          <mat-form-field appearance="outline" class="example-form-3">-->
-<!--            <mat-label>Номер файла</mat-label>-->
-<!--            <input matInput type="number" step="1" [(ngModel)]="id">-->
-<!--          </mat-form-field>-->
           <mat-form-field appearance="outline" class="example-form-3">
-            <mat-label>Номер файла</mat-label>
-            <mat-select [(value)]="id">
-              <mat-option *ngFor="let select of idList" value="{{select}}">{{select}}</mat-option>
+            <mat-label>Файл</mat-label>
+            <mat-select [(value)]="file.fileId">
+              <mat-option *ngFor="let select of filesInfo; index as i" value="{{select.id}}">
+                {{i}} {{select.name}}
+              </mat-option>
             </mat-select>
           </mat-form-field>
           <button class="example-btn-2" mat-raised-button color="warn"
-                  (click)="loadDataInfo(); nextStep(step)" [disabled]="id == null">
+                  (click)="setFileInfo(); loadMeasurementsInfo();" [disabled]="file.fileId == null">
             Применить
           </button>
         </mat-action-row>
@@ -45,7 +47,7 @@
 
       <br>
 
-      <mat-expansion-panel [expanded]="step === 1" (opened)="step=1" [disabled]="!showParams.fileSelected">
+      <mat-expansion-panel [disabled]="!showParams.fileSelected">
         <mat-expansion-panel-header>
           <mat-panel-title>
             Выбор измерений
@@ -54,38 +56,41 @@
 
         <mat-form-field appearance="outline">
           <mat-label>Аналоговые величины</mat-label>
-          <mat-select [(ngModel)]="selectedAnalog" multiple>
-            <mat-option *ngFor="let topping of analogNames" [value]="topping">{{topping}}</mat-option>
+          <mat-select [(ngModel)]="signalNumbers.analog" multiple>
+            <mat-option *ngFor="let meas of measurementsInfo.analog"
+                        [value]="meas.key.signalNumber">{{meas.number}} {{meas.name}}</mat-option>
           </mat-select>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Действующие значения</mat-label>
-          <mat-select [(ngModel)]="selectedRms" multiple>
-            <mat-option *ngFor="let topping of rmsNames" [value]="topping">{{topping}}</mat-option>
+          <mat-select [(ngModel)]="signalNumbers.rms" multiple>
+            <mat-option *ngFor="let meas of measurementsInfo.rms"
+                        [value]="meas.key.signalNumber">{{meas.number}} {{meas.name}}</mat-option>
           </mat-select>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Дискретные величины</mat-label>
-          <mat-select [(ngModel)]="selectedDigital" multiple>
-            <mat-option *ngFor="let topping of digitalNames" [value]="topping">{{topping}}</mat-option>
+          <mat-select [(ngModel)]="signalNumbers.digital" multiple>
+            <mat-option *ngFor="let meas of measurementsInfo.digital"
+                        [value]="meas.key.signalNumber">{{meas.number}} {{meas.name}}</mat-option>
           </mat-select>
         </mat-form-field>
 
         <mat-action-row class="action-row">
           <mat-form-field appearance="outline" class="example-form-2">
             <mat-label>Начало</mat-label>
-            <input matInput type="number" step="1" [(ngModel)]="start">
+            <input matInput type="number" step="1" [(ngModel)]="range.start">
           </mat-form-field>
           <mat-form-field appearance="outline" class="example-form">
             <mat-label>Конец</mat-label>
-            <input matInput type="number" step="1" [(ngModel)]="end">
+            <input matInput type="number" step="1" [(ngModel)]="range.end">
           </mat-form-field>
           <button class="example-btn-2" mat-raised-button color="warn"
                   (click)="loadData()"
-                  [disabled]="((selectedAnalog.length == 0) && (selectedRms.length == 0) && (selectedDigital.length == 0))
-                   || (start==null || end==null || start>end || end-start>maxSize) || (id == null)">
+                  [disabled]="((signalNumbers.analog.length == 0) && (signalNumbers.rms.length == 0) && (signalNumbers.digital.length == 0))
+                   || range.start > range.end || range.start-range.end > MAX_SIZE">
             Применить
           </button>
         </mat-action-row>
@@ -97,34 +102,34 @@
     <mat-tab label="График" [disabled]="!showParams.measSelected">
       <mat-card-content>
         <apx-chart
-            [yaxis]="chartOptions.yaxis"
-            [series]="chartOptions.series"
-            [chart]="chartOptions.chart"
-            [title]="chartOptions.title"
-            [legend]="chartOptions.legend"
+          [yaxis]="chartOptions.analog.yaxis"
+          [series]="chartOptions.analog.series"
+          [chart]="chartOptions.analog.chart"
+          [title]="chartOptions.analog.title"
+          [legend]="chartOptions.analog.legend"
 
-            [dataLabels]="commonOpt.dataLabels"
-            [markers]="commonOpt.markers"
-            [stroke]="commonOpt.stroke"
-            [grid]="commonOpt.grid"
-            [xaxis]="commonOpt.xaxis"
-            [tooltip]="commonOpt.tooltip"
-          ></apx-chart>
+          [dataLabels]="chartOptions.common.dataLabels"
+          [markers]="chartOptions.common.markers"
+          [stroke]="chartOptions.common.stroke"
+          [grid]="chartOptions.common.grid"
+          [xaxis]="chartOptions.common.xaxis"
+          [tooltip]="chartOptions.common.tooltip"
+        ></apx-chart>
 
-          <apx-chart
-            [yaxis]="chartOptionsDig.yaxis"
-            [series]="chartOptionsDig.series"
-            [chart]="chartOptionsDig.chart"
-            [title]="chartOptionsDig.title"
-            [legend]="chartOptionsDig.legend"
+        <apx-chart
+          [yaxis]="chartOptions.digital.yaxis"
+          [series]="chartOptions.digital.series"
+          [chart]="chartOptions.digital.chart"
+          [title]="chartOptions.digital.title"
+          [legend]="chartOptions.digital.legend"
 
-            [dataLabels]="commonOpt.dataLabels"
-            [markers]="commonOpt.markers"
-            [stroke]="commonOpt.stroke"
-            [grid]="commonOpt.grid"
-            [xaxis]="commonOpt.xaxis"
-            [tooltip]="commonOpt.tooltip"
-          ></apx-chart>
+          [dataLabels]="chartOptions.common.dataLabels"
+          [markers]="chartOptions.common.markers"
+          [stroke]="chartOptions.common.stroke"
+          [grid]="chartOptions.common.grid"
+          [xaxis]="chartOptions.common.xaxis"
+          [tooltip]="chartOptions.common.tooltip"
+        ></apx-chart>
       </mat-card-content>
     </mat-tab>
 
@@ -135,13 +140,13 @@
 
       <mat-paginator class="demo-paginator"
                      (page)="handleTablePageEvent($event)"
-                     [length]="length"
-                     [pageSize]="pageSize"
+                     [length]="tablePage.size"
+                     [pageSize]="tablePage.pageSize"
                      [disabled]="false"
                      [showFirstLastButtons]="true"
-                     [pageSizeOptions]="pageSizeOptions"
+                     [pageSizeOptions]="tablePage.pageSizeOptions"
                      [hidePageSize]="false"
-                     [pageIndex]="pageIndex"
+                     [pageIndex]="tablePage.pageIndex"
                      aria-label="Select page">
       </mat-paginator>
 
@@ -151,12 +156,12 @@
         <table class="table table-bordered table-striped table-hover table-sm">
           <thead class="thead-dark">
           <tr>
-            <th *ngFor="let d of pageTableData" scope="col">{{d.name}}</th>
+            <th *ngFor="let d of tablePage.tablePageData" scope="col">{{d.name}}</th>
           </tr>
           </thead>
           <tbody>
-          <tr *ngFor="let darr of pageTableData[0].dataArr; index as i">
-            <td *ngFor="let d of pageTableData"> {{Math.round(d.dataArr[i] * 1000000) / 1000000}} </td>
+          <tr *ngFor="let _ of tablePage.tablePageData[0].dataArr; index as i">
+            <td *ngFor="let d of tablePage.tablePageData"> {{d.dataArr[i]}} </td>
           </tr>
           </tbody>
         </table>
@@ -178,8 +183,9 @@
 
           <mat-form-field appearance="outline">
             <mat-label>Выберете ток фазы A</mat-label>
-            <mat-select [(value)]="phAName">
-              <mat-option *ngFor="let name of rmsNames" value="{{name}}">{{name}}</mat-option>
+            <mat-select [(value)]="faultPhaseNumber.phA">
+              <mat-option *ngFor="let meas of measurementsInfo.rms"
+                          value="{{meas.key.signalNumber}}">{{meas.number}} {{meas.name}}</mat-option>
             </mat-select>
           </mat-form-field>
 
@@ -187,8 +193,9 @@
 
           <mat-form-field appearance="outline">
             <mat-label>Выберете ток фазы B</mat-label>
-            <mat-select [(value)]="phBName">
-              <mat-option *ngFor="let name of rmsNames" value="{{name}}">{{name}}</mat-option>
+            <mat-select [(value)]="faultPhaseNumber.phB">
+              <mat-option *ngFor="let meas of measurementsInfo.rms"
+                          value="{{meas.key.signalNumber}}">{{meas.number}} {{meas.name}}</mat-option>
             </mat-select>
           </mat-form-field>
 
@@ -196,8 +203,9 @@
 
           <mat-form-field appearance="outline">
             <mat-label>Выберете ток фазы C</mat-label>
-            <mat-select [(value)]="phCName">
-              <mat-option *ngFor="let name of rmsNames" value="{{name}}">{{name}}</mat-option>
+            <mat-select [(value)]="faultPhaseNumber.phC">
+              <mat-option *ngFor="let meas of measurementsInfo.rms"
+                          value="{{meas.key.signalNumber}}">{{meas.number}} {{meas.name}}</mat-option>
             </mat-select>
           </mat-form-field>
 
@@ -208,11 +216,11 @@
         <mat-card-actions>
           <mat-form-field appearance="outline" class="example-form">
             <mat-label>Запас</mat-label>
-            <input matInput type="number" step="1" min="1" [(ngModel)]="stock">
+            <input matInput type="number" step="1" min="1" [(ngModel)]="faultPhaseNumber.stock">
             <span matTextSuffix>%</span>
           </mat-form-field>
           <button class="example-btn" mat-raised-button color="warn"
-                  [disabled]="!phAName || !phBName || !phCName || id == null"
+                  [disabled]="!faultPhaseNumber.isValid() || faultPhaseNumber.stock == null"
                   (click)="analise()">
             Применить
           </button>
@@ -227,9 +235,9 @@
           <mat-card-title>Результат</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <mat-card-content>Время возникновения КЗ: {{measData.time<0?"не найдено":measData.time + " с (" + getCount(measData.time) + ")"}}</mat-card-content>
-          <mat-card-content>Поврежденные фазы: {{measData.fault == null?"не найдено":measData.fault}}</mat-card-content>
-          <mat-card-content>Расчетная уставка: {{measData.set}}</mat-card-content>
+          <mat-card-content>Время возникновения КЗ: {{faultData.time < 0 ? "не найдено" : getTime(faultData.time) + " с (" + faultData.time + ")"}}</mat-card-content>
+          <mat-card-content>Поврежденные фазы: {{faultData.fault == null ? "не найдено" : faultData.fault}}</mat-card-content>
+          <mat-card-content>Расчетная уставка: {{faultData.set}}</mat-card-content>
 
           <br>
 
@@ -245,12 +253,12 @@
               </tr>
               </thead>
               <tbody>
-              <tr *ngFor="let d of [measData.normalCurrent, measData.faultCurrent], index as i">
+              <tr *ngFor="let d of [faultData.normalCurrent, faultData.faultCurrent], index as i">
                 <td> {{i == 0 ? "Нормальный режим" : "Режим повреждения"}} </td>
-                <td> {{d.time}} с ({{getCount(d.time)}})</td>
-                <td> {{Math.round(d.phA * 1000) / 1000}} </td>
-                <td> {{Math.round(d.phB * 1000) / 1000}} </td>
-                <td> {{Math.round(d.phC * 1000) / 1000}} </td>
+                <td> {{d == null ? 0 : getTime(d.time)}} с ({{d == null ? 0 : d.time}})</td>
+                <td> {{d == null ? 0 : Math.round(d.phA * 1000) / 1000}} </td>
+                <td> {{d == null ? 0 : Math.round(d.phB * 1000) / 1000}} </td>
+                <td> {{d == null ? 0 : Math.round(d.phC * 1000) / 1000}} </td>
               </tr>
               </tbody>
             </table>
@@ -268,16 +276,16 @@
         </mat-card-header>
 
         <mat-card-content>
-          <mat-card-content><b> Наименование: </b> {{metaInf.name}} </mat-card-content>
-          <mat-card-content><b> Количство точек в периоде: </b> {{metaInf.n}}</mat-card-content>
-          <mat-card-content><b> Частота: </b> {{metaInf.freq}}</mat-card-content>
-          <mat-card-content><b> Количество аналоговых сигналов: </b> {{metaInf.analog}} </mat-card-content>
-          <mat-card-content><b> Количество дискретных сигналов: </b> {{metaInf.digital}} </mat-card-content>
-          <mat-card-content *ngIf="metaInf.timeStart != 'empty'"><b> Время начала: </b> {{metaInf.timeStart}}
+          <mat-card-content><b> Наименование: </b> {{file.fileInfo?.name}} </mat-card-content>
+          <mat-card-content><b> Количство точек в периоде: </b> {{file.fileInfo?.n}}</mat-card-content>
+          <mat-card-content><b> Частота: </b> {{file.fileInfo?.freq}}</mat-card-content>
+          <mat-card-content><b> Количество аналоговых сигналов: </b> {{file.fileInfo?.analog}} </mat-card-content>
+          <mat-card-content><b> Количество дискретных сигналов: </b> {{file.fileInfo?.digital}} </mat-card-content>
+          <mat-card-content *ngIf="file.fileInfo?.timeStart != null"><b> Время начала: </b> {{file.fileInfo?.timeStart}}
           </mat-card-content>
-          <mat-card-content *ngIf="metaInf.timeEnd != 'empty'"><b> Время конца: </b> {{metaInf.timeEnd}}
+          <mat-card-content *ngIf="file.fileInfo?.timeEnd != null"><b> Время конца: </b> {{file.fileInfo?.timeEnd}}
           </mat-card-content>
-          <mat-card-content><b> Тип файла: </b> {{metaInf.type}} </mat-card-content>
+          <mat-card-content><b> Тип файла: </b> {{file.fileInfo?.type}} </mat-card-content>
         </mat-card-content>
 
       </mat-card>

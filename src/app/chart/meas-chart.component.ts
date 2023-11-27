@@ -6,20 +6,21 @@ import {
   ApexDataLabels,
   ApexGrid,
   ApexLegend,
+  ApexMarkers,
   ApexStroke,
   ApexTitleSubtitle,
-  ApexXAxis,
-  ApexYAxis,
   ApexTooltip,
-  ApexMarkers
+  ApexXAxis,
+  ApexYAxis
 } from "ng-apexcharts";
 
-import {MeasService} from "../services/meas/meas.service";
-import {MeasList} from "../models/meas-list";
+import {DataService} from "../services/data/data.service";
 import {PageEvent} from "@angular/material/paginator";
-import {MeasData} from "../models/meas-data";
-import {MetaInf} from "../models/meta-inf";
-import {FilesInfo} from "../models/files-info";
+import {Measurement, Range} from "../models/measurement";
+import {SignalType} from "../models/key";
+import {FaultPhasesNumber} from "../models/fault-phases-number";
+import {FaultData} from "../models/fault-data";
+import {FileView} from "../models/file-view";
 
 export class TableData {
   constructor(name: string, dataArr: number[]) {
@@ -30,11 +31,6 @@ export class TableData {
   name: string = '';
   dataArr: number[] = [];
 
-}
-export class ShowParam {
-  fileSelected: boolean = false
-  measSelected: boolean = false
-  measForAnaliseSelected: boolean = false
 }
 
 export type ChartOptions = {
@@ -51,6 +47,9 @@ export type ChartOptions = {
   markers: ApexMarkers;
 };
 
+const MAX_SIZE: number = 20_000;
+const PAGE_SIZE_OPTIONS: number[] = [10, 20, 50, 100]
+
 @Component({
   selector: 'app-chart',
   templateUrl: './meas-chart.component.html',
@@ -58,324 +57,357 @@ export type ChartOptions = {
 })
 export class MeasChartComponent implements OnInit {
 
-  showParams: ShowParam = new ShowParam()
+  faultData: FaultData = new FaultData()
+  filesInfo: FileView[] = []
 
-  chartOptions: ChartOptions
-  chartOptionsDig: ChartOptions
-  commonOpt: ChartOptions
+  faultPhaseNumber: FaultPhasesNumber
 
-  names: string[] = []
-  analogNames: string[] = [];
-  digitalNames: string[] = [];
+  file: {
+    fileInfo?: FileView | null;
+    fileId?: string | null;
+  } = {}
 
-  selectedAnalog: string[] = [];
-  selectedRms: string[] = [];
-  selectedDigital: string[] = [];
+  showParams: {
+    fileSelected: boolean,
+    measSelected: boolean,
+    measForAnaliseSelected: boolean
+  }
 
-  step = 0;
+  chartOptions: {
+    analog: ChartOptions;
+    digital: ChartOptions;
+    common: ChartOptions;
+  }
 
-  tableData: TableData[] = [];
-  pageTableData: TableData[] = [];
+  tableData: TableData[] = []
+  tablePage: {
+    tablePageData: TableData[],
+    size: number,
+    pageSize: number
+    pageIndex: number
+    pageSizeOptions: number[]
+  }
 
+  measurementsInfo: {
+    analog: Measurement[],
+    rms: Measurement[]
+    digital: Measurement[],
+  }
 
-  length = 0;
-  pageSize = 20;
-  pageIndex = 0;
-  pageSizeOptions = [10, 20, 50, 100];
+  range = new Range(1, MAX_SIZE)
+  signalNumbers : {
+    analog: number[],
+    rms: number[],
+    digital: number[]
+  }
 
-  phAName = '';
-  phBName = '';
-  phCName = '';
-  stock = 20;
-  rmsNames: string[] = [];
-
-  measData: MeasData = new MeasData();
-
-  start: number = 1;
-  end: number = 60000;
-  maxSize: number = 60000;
-
-  metaInf: MetaInf = new MetaInf();
-
-  filesInfo: FilesInfo[] = [];
-  id: number | undefined;
-  idList: number[] = [];
-
-  constructor(private measService: MeasService) {
+  constructor(private measService: DataService) {
     this.chartOptions = {
-      series: [],
-      chart: {
-        id: "av",
-        group: "value",
-        height: 500,
-        type: "line",
-        zoom: {
-          enabled: true
-        },
-        animations: {
-          enabled: false
-        }
-      },
-      dataLabels: {
-        enabled: false
-      },
-      stroke: {
-        curve: "straight",
-        width: 1
-      },
-      title: {},
-      grid: {
-        row: {
-          colors: ["#f3f3f3", "transparent"],
-          opacity: 0.5
-        }
-      },
-      yaxis: {
-        decimalsInFloat: 2,
-        labels: {
-          minWidth: 50,
-          maxWidth: 50
-        }
-      },
-      xaxis: {
-        type: 'numeric',
-        labels: {
-          show: false
-        }
-      },
-      legend: {},
-      tooltip: {},
-      markers: {
-        size: 0
-      }
-    };
-    this.chartOptionsDig = {
-      series: [],
-      chart: {
-        id: "dv",
-        group: "value",
-        height: 200,
-        type: "line",
-        zoom: {
-          enabled: true
-        },
-        animations: {
-          enabled: false
-        }
-      },
-      dataLabels: {
-        enabled: false
-      },
-      stroke: {
-        curve: "straight",
-        width: 1
-      },
-      title: {},
-      grid: {
-        row: {
-          colors: ["#f3f3f3", "transparent"],
-          opacity: 0.5
-        }
-      },
-      yaxis: {
-        min: -0.1,
-        max: 1.1,
-        tickAmount: 1,
-        decimalsInFloat: 0,
-        labels: {
-          minWidth: 50,
-          maxWidth: 50,
-          formatter: function (val) {
-            return val == 1 ? "true" : (val == 0 ? "false" : "");
+      analog: {
+        series: [],
+        chart: {
+          id: "av",
+          group: "value",
+          height: 500,
+          type: "line",
+          zoom: {
+            enabled: true
+          },
+          animations: {
+            enabled: false
           }
-        }
-
-      },
-      xaxis: {
-        type: 'numeric',
-        labels: {
-          show: false
-        }
-      },
-      legend: {},
-      tooltip: {},
-      markers: {
-        size: 0
-      }
-    };
-    this.commonOpt = {
-      series: [],
-      chart: {
-        height: 200,
-        type: "line",
-        zoom: {
-          enabled: true
         },
-        animations: {
+        dataLabels: {
           enabled: false
-        }
-      },
-      dataLabels: {
-        enabled: false
-      },
-      stroke: {
-        curve: "straight",
-        width: 1
-      },
-      title: {},
-      grid: {
-        row: {
-          colors: ["#f3f3f3", "transparent"],
-          opacity: 0.5
-        }
-      },
-      yaxis: {
-        decimalsInFloat: 2
-      },
-      xaxis: {
-        type: 'numeric',
-        labels: {
-          show: false
-        }
-      },
-      legend: {},
-      tooltip: {
-        followCursor: false,
-        theme: "dark",
-        x: {
-          show: false
         },
-        marker: {
-          show: true
+        stroke: {
+          curve: "straight",
+          width: 1
         },
-        y: {}
+        title: {},
+        grid: {
+          row: {
+            colors: ["#f3f3f3", "transparent"],
+            opacity: 0.5
+          }
+        },
+        yaxis: {
+          decimalsInFloat: 2,
+          labels: {
+            minWidth: 50,
+            maxWidth: 50
+          }
+        },
+        xaxis: {
+          type: 'numeric',
+          labels: {
+            show: false
+          }
+        },
+        legend: {},
+        tooltip: {},
+        markers: {
+          size: 0
+        }
       },
-      markers: {
-        size: 0
+      digital: {
+        series: [],
+        chart: {
+          id: "dv",
+          group: "value",
+          height: 200,
+          type: "line",
+          zoom: {
+            enabled: true
+          },
+          animations: {
+            enabled: false
+          }
+        },
+        dataLabels: {
+          enabled: false
+        },
+        stroke: {
+          curve: "straight",
+          width: 1
+        },
+        title: {},
+        grid: {
+          row: {
+            colors: ["#f3f3f3", "transparent"],
+            opacity: 0.5
+          }
+        },
+        yaxis: {
+          min: -0.1,
+          max: 1.1,
+          tickAmount: 1,
+          decimalsInFloat: 0,
+          labels: {
+            minWidth: 50,
+            maxWidth: 50,
+            formatter: function (val) {
+              return val == 1 ? "true" : (val == 0 ? "false" : "");
+            }
+          }
+
+        },
+        xaxis: {
+          type: 'numeric',
+          labels: {
+            show: false
+          }
+        },
+        legend: {},
+        tooltip: {},
+        markers: {
+          size: 0
+        }
+      },
+      common: {
+        series: [],
+        chart: {
+          height: 200,
+          type: "line",
+          zoom: {
+            enabled: true
+          },
+          animations: {
+            enabled: false
+          }
+        },
+        dataLabels: {
+          enabled: false
+        },
+        stroke: {
+          curve: "straight",
+          width: 1
+        },
+        title: {},
+        grid: {
+          row: {
+            colors: ["#f3f3f3", "transparent"],
+            opacity: 0.5
+          }
+        },
+        yaxis: {
+          decimalsInFloat: 2
+        },
+        xaxis: {
+          type: 'numeric',
+          labels: {
+            show: false
+          }
+        },
+        legend: {},
+        tooltip: {
+          followCursor: false,
+          theme: "dark",
+          x: {
+            show: false
+          },
+          marker: {
+            show: true
+          },
+          y: {}
+        },
+        markers: {
+          size: 0
+        }
       }
-    };
-
-  }
-
-  printlog() {
-    console.log(this.id)
-  }
-
-  nextStep(st: number) {
-    this.step = st + 1;
+    }
+    this.showParams = {
+      fileSelected: false,
+      measSelected: false,
+      measForAnaliseSelected: false
+    }
+    this.tablePage = {
+      tablePageData: [],
+      size: 0,
+      pageSizeOptions: PAGE_SIZE_OPTIONS,
+      pageSize: PAGE_SIZE_OPTIONS[0],
+      pageIndex: 0
+    }
+    this.measurementsInfo = {
+      analog: [],
+      rms: [],
+      digital: []
+    }
+    this.signalNumbers = {
+      analog: [],
+      rms: [],
+      digital: []
+    }
+    this.faultPhaseNumber = new FaultPhasesNumber(0, 0, 0)
   }
 
   loadData() {
-    if (this.id != undefined) {
-      const req: string[] = [];
-      this.selectedAnalog.forEach(value => req.push(value));
-      this.selectedRms.forEach(value => req.push(value));
-      this.selectedDigital.forEach(value => req.push(value));
-      this.measService.getMeasByNames(req, this.start, this.end, this.id).subscribe({
-        next: (event: any) => {
-          if (event.body != undefined) {
-            this.setOpt(event.body);
-          }
-        }
-      })
+    if (this.file.fileInfo) {
+      const signalNumber = this.signalNumbers.analog
+        .concat(this.signalNumbers.rms)
+        .concat(this.signalNumbers.digital)
+      this.measService.getMeasWithValuesByRange(this.file.fileInfo.id, signalNumber, this.range)
+        .subscribe(data => {
+          this.setMeasForGraph(data);
+        })
     }
   }
 
-  analise(): void {
-    if (this.id) {
-      if (this.phAName != '' && this.phBName != '' && this.phCName != '') {
-        this.measService.analise(this.phAName, this.phBName, this.phCName, this.id, this.stock)
-          .subscribe(data => {
-            this.measData = data;
-          })
-      }
-      this.showParams.measForAnaliseSelected = true;
-    }
-  }
-
-  setOpt(data: MeasList[]): void {
-    this.chartOptions.series = []
-    this.chartOptionsDig.series = []
+  setMeasForGraph(data: Measurement[]): void {
+    this.chartOptions.analog.series = []
+    this.chartOptions.digital.series = []
     this.tableData = []
 
+    const time: number[] = []
+    if (data[0].range != null) {
+      const timeRange = data[0].range
+      for (let i = timeRange.start; i < timeRange.end; i++) {
+        time.push(i)
+      }
+    } else return
 
-    this.tableData.push(new TableData("time", data.map(value => value.time)))
-    for (const mea of data[0].meas) {
 
-      const name: string = mea.name;
-      const dataArr = data.map((value) => value.meas
-        .filter(value => value.name==name).map(value1 => value1.val)[0])
-      this.chartOptions.series.push(
-        {
-          name: name,
-          data: dataArr
+    this.tableData.push(new TableData("time", time))
+
+    for (const measurement of data) {
+      this.tableData.push(new TableData(measurement.name, measurement.values));
+      switch (measurement.key.type) {
+        case SignalType.ANALOG:
+        case SignalType.RMS: {
+          this.chartOptions.analog.series.push(
+            {
+              name: measurement.name,
+              data: measurement.values
+            }
+          )
+          break;
         }
-      )
-      this.tableData.push(new TableData(name, dataArr));
-    }
-    for (const mea of data[0].dmeas) {
-      const name: string = mea.name;
-      const dataDigArr = data.map((value) => value.dmeas
-        .filter(value => value.name.startsWith(name)).map(value1 => value1.val ? 1 : 0)[0])
-      this.chartOptionsDig.series.push(
-        {
-          name: name,
-          data: dataDigArr
+        case SignalType.DIGITAL: {
+          this.chartOptions.digital.series.push(
+            {
+              name: measurement.name,
+              data: measurement.values
+            }
+          )
+          break;
         }
-      )
-      this.tableData.push(new TableData(name, dataDigArr));
+      }
     }
 
-    this.length = this.tableData[0].dataArr.length
-    this.setTablePage(this.pageSize * this.pageIndex, this.pageSize * (this.pageIndex + 1))
-
+    this.tablePage.size = this.tableData[0].dataArr.length
+    this.setTablePage(
+      this.tablePage.pageSize * this.tablePage.pageIndex,
+      this.tablePage.pageSize * (this.tablePage.pageIndex + 1)
+    )
     this.showParams.measSelected = true;
   }
 
   handleTablePageEvent(e: PageEvent) {
-    this.length = e.length;
-    this.pageSize = e.pageSize;
-    this.pageIndex = e.pageIndex;
-    if (this.length != 0) {
-      this.setTablePage(this.pageSize * this.pageIndex, this.pageSize * (this.pageIndex + 1))
+    this.tablePage.size = e.length;
+    this.tablePage.pageSize = e.pageSize;
+    this.tablePage.pageIndex = e.pageIndex;
+    if (this.tablePage.size != 0) {
+      this.setTablePage(
+        this.tablePage.pageSize * this.tablePage.pageIndex,
+        this.tablePage.pageSize * (this.tablePage.pageIndex + 1)
+      )
     }
   }
 
-
   setTablePage(start: number, end: number): void {
-    this.pageTableData = []
+    this.tablePage.tablePageData = []
     for (const td of this.tableData) {
-      this.pageTableData.push(new TableData(
-        td.name,
-        td.dataArr.slice(start, end)
-      ))
+      this.tablePage.tablePageData.push(new TableData(td.name, td.dataArr.slice(start, end)))
     }
   }
 
   ngOnInit(): void {
+    this.fetchData()
+  }
+
+  fetchData(): void {
     this.measService.getFilesInfo().subscribe(data => {
       this.filesInfo = data
-      this.idList = data.map(v => v.id)
     })
   }
-  loadDataInfo(): void {
-    if (this.id != undefined) {
-      this.measService.getMeasNames(this.id).subscribe(data => {
-        this.names = data.sort()
-        this.rmsNames = this.names.filter(s => s.endsWith("_RMS"))
-        this.digitalNames = this.names.filter(s => s.endsWith("_BOOL"))
-        this.analogNames = this.names.filter(s => !s.endsWith("_BOOL") && !s.endsWith("_RMS"))
-      })
-      this.measService.getMetaInf(this.id).subscribe(data => {
-        this.metaInf = data;
-      })
-      this.showParams.fileSelected = true
+
+  analise(): void {
+    if (this.file.fileInfo) {
+      this.measService.analise(this.file.fileInfo.id, this.faultPhaseNumber)
+        .subscribe(data => {
+          this.faultData = data;
+        })
+      this.showParams.measForAnaliseSelected = true;
     }
   }
 
-  getCount(val: number) {
-    return Math.round(val * this.metaInf.n * this.metaInf.freq);
+  loadMeasurementsInfo(): void {
+    if (this.file.fileInfo) {
+      this.measService.getMeasurementsInfo(this.file.fileInfo.id).subscribe(data => {
+        this.measurementsInfo.analog = data.filter(v => v.key.type == SignalType.ANALOG)
+        this.measurementsInfo.rms = data.filter(v => v.key.type == SignalType.RMS)
+        this.measurementsInfo.digital = data.filter(v => v.key.type == SignalType.DIGITAL)
+        this.showParams.fileSelected = true
+      })
+    }
   }
 
+  setFileInfo() {
+    this.file.fileInfo = this.filesInfo.find(v => v.id == this.file.fileId)
+  }
+
+  getTime(count: number) {
+    if (this.file.fileInfo) {
+      return Math.round(count / this.file.fileInfo.n / this.file.fileInfo.freq * 100)/100;
+    } else return 1
+  }
+
+  deleteFile(id: string) {
+    if(confirm(`Вы уверены что хотите удалить файл?\nid: ${id}`)) {
+      this.measService.deleteFile(id).subscribe(() => this.fetchData())
+    }
+  }
+
+  protected readonly MAX_SIZE = MAX_SIZE;
   protected readonly Math = Math;
 }
